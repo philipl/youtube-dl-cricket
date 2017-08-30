@@ -434,6 +434,7 @@ from .go import GoIE
 from .godtube import GodTubeIE
 from .golem import GolemIE
 from .googledrive import GoogleDriveIE
+from .googlephotos import GooglePhotosIE
 from .googlepodcasts import (
     GooglePodcastsIE,
     GooglePodcastsFeedIE,
