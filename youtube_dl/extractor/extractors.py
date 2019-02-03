@@ -1510,6 +1510,7 @@ from .weibo import (
     WeiboMobileIE
 )
 from .weiqitv import WeiqiTVIE
+from .willowtv import WillowTvReplayIE
 from .wistia import (
     WistiaIE,
     WistiaPlaylistIE,
