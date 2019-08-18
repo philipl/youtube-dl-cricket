@@ -103,3 +103,29 @@ class WillowTvReplayIE(InfoExtractor):
                     })
 
         return self.playlist_result(entries, slug)
+
+
+class WillowTvVideoIE(InfoExtractor):
+    IE_NAME = 'willowtv:video'
+    _VALID_URL = r'https?://(?:www\.)?willow\.tv/videos/(?P<id>.*)'
+    _TESTS = []
+
+    def _real_extract(self, url):
+        slug = self._match_id(url)
+
+        webpage = self._download_webpage(url, slug)
+
+        stream = self._search_regex(r'f_strm = \"(?P<stream>.*)\"', webpage, 'stream', group='stream')
+        title = self._search_regex(r'var videotitle=\"(?P<title>.*)\"', webpage, 'title', group='title')
+
+        formats = self._extract_m3u8_formats(
+            stream, slug, 'mp4',
+            entry_protocol='m3u8_native',
+            m3u8_id='hls', fatal=True)
+        self._sort_formats(formats)
+
+        return {
+            'id': slug,
+            'title': title,
+            'formats': formats,
+        }
