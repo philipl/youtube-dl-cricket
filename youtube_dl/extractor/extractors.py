@@ -1512,6 +1512,7 @@ from .weibo import (
 from .weiqitv import WeiqiTVIE
 from .willowtv import (
     WillowTvReplayIE,
+    WillowTvLiveIE,
     WillowTvVideoIE,
 )
 from .wistia import (
