@@ -5,7 +5,7 @@ from .common import InfoExtractor
 
 
 class GooglePhotosIE(InfoExtractor):
-    _VALID_URL = r'https?://photos\.google\.com/share/(.+?)/photo/(.+?)key=(?P<id>.*)'
+    _VALID_URL = r'https?://photos\.google\.com/(.*)photo/(?P<id>.*?)(\?key=|$)(.*)'
     _TEST = {
         'url': 'https://photos.google.com/share/AF1QipO9WO5MnYm7850JgwAl7DIvRzbCoEcJamtywXL-oQ49rwF3K1frOSK63fjYD5MD-A/photo/AF1QipPRvvdy6-3EOqSACtJb7Q8QfmlXN4d4MwX5ico8?key=ZEV4S3RmYXd0bWNzQjRfQ09KQlBud1M4OUU1RzZn',
         'md5': 'TODO: md5 sum of the first 10241 bytes of the video file (use --test)',
