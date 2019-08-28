@@ -44,8 +44,8 @@ class WillowTvReplayIE(InfoExtractor):
         for result in results:
             matchid = result['Id']
 
-            name = try_get(result, lambda x: x['Name'], compat_str)
-            series = try_get(result, lambda x: x['SeriesName'], compat_str)
+            name = try_get(result, lambda x: x['Name'], compat_str).replace(' - ', '.').replace(' ', '.')
+            series = try_get(result, lambda x: x['SeriesName'], compat_str).replace(' ', '.')
             match_type = try_get(result, lambda x: x['Type'], compat_str)
 
             data = self._download_json(
