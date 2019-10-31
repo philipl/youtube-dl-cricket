@@ -20,7 +20,7 @@ class CricketComAuLiveIE(InfoExtractor):
     # These might be more dynamic
     _ACCOUNT_ID = '807051129001'
     _ENVIRONMENT = 'KYfw9lAsI'
-    _POLICY_KEY = 'BCpkADawqM17uKWqEHlBulux385QZ_BoC6x04LRDmsykNRb4uwwRJ8x38iHNk-7kxEqJUu3qZGMFCiKA4d8SeUB0c40Z46CutsbR219abTqUHi82DqCZMUJo36s'
+    #_POLICY_KEY = 'BCpkADawqM17uKWqEHlBulux385QZ_BoC6x04LRDmsykNRb4uwwRJ8x38iHNk-7kxEqJUu3qZGMFCiKA4d8SeUB0c40Z46CutsbR219abTqUHi82DqCZMUJo36s'
 
     def _match_competition(cls, url):
         if '_VALID_URL_RE' not in cls.__dict__:
@@ -33,6 +33,7 @@ class CricketComAuLiveIE(InfoExtractor):
         meta_format = 'https://apiv2.cricket.com.au/streams?LegacyCompetitionId=%s&LegacyFixtureId=%s&format=json'
         player_format = 'https://players.brightcove.net/%s/%s_default/index.min.js'
         stream_format = 'https://edge.api.brightcove.com/playback/v1/accounts/%s/videos/%s'
+        live_format = 'https://api.cricket.com.au/matches/%s/%s/live?overLimit=5&format=json'
 
         fixture = self._match_id(url)
         competition = self._match_competition(url)
@@ -40,6 +41,20 @@ class CricketComAuLiveIE(InfoExtractor):
         meta = self._download_json(
             meta_format % (competition, fixture),
             fixture)
+
+        live = self._download_json(
+            live_format % (competition, fixture),
+            fixture)
+
+        match = try_get(live, lambda x: x['liveMatch'], dict) or {}
+        match_detail = match['matchDetail']
+        series = match_detail['series']['name']
+        match_type = match_detail['cmsMatchType']
+        match_name = match_detail['matchName']
+        home = match_detail['homeTeam']['name']
+        away = match_detail['awayTeam']['name']
+
+        title = ('%s.%s.%s.%s.vs.%s' % (match_type, series, match_name, home, away)).replace(' ', '.')
 
         streams = try_get(meta, lambda x: x['Streams'], list) or []
         if not streams:
@@ -56,22 +71,19 @@ class CricketComAuLiveIE(InfoExtractor):
             raise ExtractorError('No live stream found. Is the stream active yet?',
                                  expected=True)
 
-        '''
         player_js = self._download_webpage(
             player_format % (self._ACCOUNT_ID, self._ENVIRONMENT),
             fixture,
             note='Downloading Player JS')
 
-        print(player_js)
-        r = re.compile(r'policyKey:\"(?P<policyKey>.*)\"}\);')
-        m = r.match(player_js)
-        print(m.group('policyKey'))
-        '''
+        r = re.compile(r'policyKey:\"(?P<policyKey>.*?)\"')
+        m = r.search(player_js)
+        policy_key = m.group('policyKey')
 
         stream_json = self._download_json(
             stream_format % (self._ACCOUNT_ID, stream_id),
             fixture,
-            headers = { 'Accept': 'application/json;pk=%s' % self._POLICY_KEY})
+            headers = { 'Accept': 'application/json;pk=%s' % policy_key})
 
         sources = try_get(stream_json, lambda x: x['sources'], list) or []
 
@@ -81,9 +93,7 @@ class CricketComAuLiveIE(InfoExtractor):
         for source in sources:
             type = try_get(source, lambda x: x['type'], compat_str)
             if type != 'application/vnd.apple.mpegurl':
-                raise ExtractorError(
-                    'Unsupported video format "%s".' % vid_format,
-                    expected=True)
+                continue
             asset_id = try_get(source, lambda x: x['asset_id'], compat_str) or fixture
             url = source['src']
 
@@ -95,15 +105,11 @@ class CricketComAuLiveIE(InfoExtractor):
 
             entries.append({
                 'id': asset_id,
-                'title': asset_id,
-                #'series': series,
-                #'episode_name': name,
+                'title': title,
+                'series': series,
+                'episode_name': match_name,
                 #'episode_id': matchid,
-                #'chapter_number': part,
-                #'chapter_id': part_id,
-                #'match_type': match_type,
-                #'url': url,
-                #'_type': 'url_transparent',
+                'match_type': match_type,
                 'formats': formats,
             })
 
