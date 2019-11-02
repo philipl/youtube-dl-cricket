@@ -62,12 +62,11 @@ class CricketComAuLiveIE(InfoExtractor):
                 'No streams present for this match. Is it active yet?',
                 expected=True)
 
-        stream_id = None
+        stream_ids = []
         for stream in streams:
-            if stream['IsLive']:
-                stream_id = stream['StreamId']
-                break
-        if not stream_id:
+            if stream['IsLive'] and stream['StreamType'] == 'Video Stream' and int(stream['StreamId']) > 1000000:
+                stream_ids.append(stream['StreamId'])
+        if not stream_ids:
             raise ExtractorError('No live stream found. Is the stream active yet?',
                                  expected=True)
 
@@ -80,12 +79,14 @@ class CricketComAuLiveIE(InfoExtractor):
         m = r.search(player_js)
         policy_key = m.group('policyKey')
 
-        stream_json = self._download_json(
-            stream_format % (self._ACCOUNT_ID, stream_id),
-            fixture,
-            headers = { 'Accept': 'application/json;pk=%s' % policy_key})
+        sources = []
+        for stream_id in stream_ids:
+            stream_json = self._download_json(
+                stream_format % (self._ACCOUNT_ID, stream_id),
+                fixture,
+                headers = { 'Accept': 'application/json;pk=%s' % policy_key})
 
-        sources = try_get(stream_json, lambda x: x['sources'], list) or []
+            sources.extend(try_get(stream_json, lambda x: x['sources'], list) or [])
 
         url = None
         asset_id = None
