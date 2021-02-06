@@ -134,20 +134,20 @@ class HotStarIE(HotStarBaseIE):
 
         if not self._USER_TOKEN:
             self._DEVICE_ID = compat_str(uuid.uuid4())
-            self._USER_TOKEN = self._call_api_v2('um/v3/users', video_id, {
-                'X-HS-Platform': 'PCTV',
-                'Content-Type': 'application/json',
-            }, data=json.dumps({
-                'device_ids': [{
-                    'id': self._DEVICE_ID,
-                    'type': 'device_id',
-                }],
-            }).encode())['user_identity']
+            country_code = 'us'
+            cookies = self._get_cookies('https://www.hotstar.com/%s' % (country_code))
+            user_up = cookies.get('userUP')
+            if not user_up or not user_up.value:
+                raise ExtractorError(
+                    'You must pass the cookies for a logged in hotstar.com '
+                    'session with --cookies to download replays.',
+                    expected=True)
+            self._USER_TOKEN = user_up.value
 
         playback_sets = self._call_api_v2(
             'play/v2/playback/content/' + video_id, video_id, {
                 'X-HS-Platform': 'web',
-                'X-HS-AppVersion': '6.99.1',
+                'X-HS-AppVersion': '7.7.0',
                 'X-HS-UserToken': self._USER_TOKEN,
             }, query={
                 'device-id': self._DEVICE_ID,
