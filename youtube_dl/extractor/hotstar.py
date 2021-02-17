@@ -169,6 +169,9 @@ class HotStarIE(HotStarBaseIE):
             tags = str_or_none(playback_set.get('tagsCombination')) or ''
             if tags and 'encryption:plain' not in tags:
                 continue
+
+            language = re.match(r'.*language:(...);.*', tags).group(1)
+
             ext = determine_ext(format_url)
             try:
                 if 'package:hls' in tags or ext == 'm3u8':
@@ -187,6 +190,7 @@ class HotStarIE(HotStarBaseIE):
                         'url': format_url,
                         'width': int_or_none(playback_set.get('width')),
                         'height': int_or_none(playback_set.get('height')),
+                        'language': language,
                     })
             except ExtractorError as e:
                 if isinstance(e.cause, compat_HTTPError) and e.cause.code == 403:
@@ -201,8 +205,9 @@ class HotStarIE(HotStarBaseIE):
 
             image = try_get(video_data, lambda x: x['image']['h'], compat_str)
             entries.append({               
-                'id': video_id,
+                'id': '%s-%s' % (video_id, language),
                 'title': title,
+                'language': language,
                 'thumbnail': 'https://img1.hotstarext.com/image/upload/' + image if image else None,
                 'description': video_data.get('description'),
                 'duration': int_or_none(video_data.get('duration')),
@@ -222,6 +227,7 @@ class HotStarIE(HotStarBaseIE):
             self.raise_geo_restricted(countries=['IN'])
 
         return self.playlist_result(entries, video_id)
+
 
 class HotStarPlaylistIE(HotStarBaseIE):
     IE_NAME = 'hotstar:playlist'
